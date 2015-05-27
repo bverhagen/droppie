@@ -1,0 +1,5 @@
+name = droppie
+description = A module for reading files from Dropbox
+core = 7.x
+package = "Dropbox"
+configure = admin/config/content

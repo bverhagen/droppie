@@ -1,0 +1,174 @@
+<?php
+
+error_reporting(-1);
+ini_set('display_errors', 'On');
+
+function print_r2($val){
+        echo '<pre>';
+        print_r($val);
+        echo  '</pre>';
+}
+
+function print_r2_val($val){
+        $mes = '<pre>';
+        $mes .= print_r($val, true);
+        $mes .= '</pre>';
+	return $mes;
+}
+
+require_once realpath(dirname(__FILE__) . "/wrapper.php");
+require_once realpath(dirname(__FILE__) . "/format.php");
+require_once realpath(dirname(__FILE__) . "/DropboxWrapper.php");
+use \DropboxWrapper as dbw;
+require_once realpath(dirname(__FILE__) . "/GoogleDriveWrapper.php");
+use \GoogleDriveWrapper as gdw;
+
+function droppie_help($path, $arg) {
+	switch ($path) {
+		case "admin/help#droppie":
+			return '<p>'.  t("Droppie module.") .'</p>';
+			break;
+	}
+}
+
+function droppie_menu() {
+	$items = array(); 
+	      $items['droppie'] = array(
+		'title' => variable_get(DroppieDefines::DROPPIE_ROOT_DIR, 'Droppie'),
+		'description' => 'Show the content of the given cloud service folder',
+		'page callback' => 'droppie_main',
+		'access arguments' => array('access droppie content'),
+		'type' => MENU_NORMAL_ITEM,
+		'context' => MENU_CONTEXT_INLINE,
+	      );
+
+	$items['admin/config/content/droppie'] = array(
+		'title' => 'Droppie',
+		'description' => 'Admin panel of the droppie module',
+		'page callback' => 'drupal_get_form',
+		'page arguments' => array('droppie_admin'),
+		'access arguments' => array('administer droppie'),
+		'type' => MENU_NORMAL_ITEM,
+	);
+
+	$items['admin/config/content/droppie/googledrive'] = array (
+		'title' => 'Droppie',
+		'description' => 'Add client token',
+		'page callback' => 'droppie_googledrive_setClientToken',
+		'access arguments' => array('administer droppie'),
+		'type' => MENU_NORMAL_ITEM,
+
+	);
+	return $items;
+}
+
+function droppie_main() {
+	if(! isset($_GET['file'])) {
+		$mainDir = variable_get(DroppieDefines::DROPPIE_ROOT_DIR, '');
+		if(isset($_GET['dir'])) {
+			$dir = ltrim(urldecode($_GET['dir']), '/');
+		} else {
+			$dir = "";
+		}
+		return droppie_getDir($dir);	
+	} else {
+		$file = ltrim(urldecode($_GET['file']), '/');
+		return droppie_getFile($file);	
+	}
+}
+
+function displayError($e) {
+	drupal_set_message(t('Caught exception') . ': ' . $e->getMessage(), 'error');
+	drupal_set_message(t('Stack trace') . ':<br>' . print_r2_var($e->getTrace()), 'error');
+}
+
+function droppie_getDir($dir) {
+	try {
+		$cloudService = getWrapperInterface()->getCloudService();
+		$files = $cloudService->listFiles($dir);
+		$formattedDirs = Format::formatDirs($files, $dir);
+	} catch (Exception $e) {
+		displayError($e);
+	}
+	return $formattedDirs;
+}
+
+function droppie_getFile($file) {
+	try {
+		$cloudService = getWrapperInterface()->getCloudService();
+		$link = $cloudService->getFile($file);
+        	header ("Location: $link");
+	} catch (Exception $e) {
+		displayError($e);
+	}
+}
+
+/**
+ * Returns the form.
+ */
+function droppie_admin() {
+	$form = array();
+
+	variable_set(DroppieDefines::DROPPIE_CLOUD_SERVICE, CloudService::GoogleDrive);
+	try {
+		$cloudService = getWrapperInterface()->handle_form($form);
+		if( $cloudService->canBeAuthenticated() ) {
+			$form[DroppieDefines::DROPPIE_ROOT_DIR] = array(
+				'#type' => 'textfield',
+				'#maxlength' => 255,
+				'#title' => t('Root directory:'),
+				'#default_value' => variable_get(DroppieDefines::DROPPIE_ROOT_DIR, '/')
+			);
+		} else {
+			$authorizeUrl = $cloudService->getAuthorizeUrl();
+			drupal_set_message(t('You need to grant access to this app to work with your ' . $account . ' account. Click') . '<a href="'.$authorizeUrl . '" target="_blank"> here</a>' . t(', login, grant this app access and copy the received token into the Oauth token field'), 'warning');
+		}
+		$form['#submit'][] = 'droppie_admin_submit';
+	} catch (Exception $e) {
+		displayError($e);
+	}
+	return system_settings_form($form);
+}
+
+function droppie_googledrive_setClientToken() {
+	if (isset($_GET['code'])) {
+		$cloudService = getWrapperInterface()->getCloudService();
+		if($cloudService->getCloudServiceType() == CloudService::GoogleDrive) {
+			$cloudService->setAccessToken($_GET['code']);
+			drupal_set_message(t('Successfully set access token'));
+		} else {
+			drupal_set_message(t('Error: please set Google drive to active in the admin panel before generating a token'), 'error');
+		}
+	}
+	$redirect = 'http://' . $_SERVER['HTTP_HOST'] . '/arenbergorkest/admin/config/content/droppie';
+	header('Location: ' . filter_var($redirect, FILTER_SANITIZE_URL));
+}
+
+/**
+ * Validates the form.
+ */
+function droppie_admin_validate($form, &$form_state) {
+}
+
+/**
+ * Add a submit handler/function to the form.
+ *
+ * This will add a completion message to the screen when the
+ * form successfully processes
+ */
+function droppie_admin_submit($form, &$form_state) {
+}
+
+/**
+ * Implements hook_permission().
+ */
+function droppie_permission(){
+  return array(
+    'access droppie content' => array(
+      'title' => t('Access content for the droppie module'),
+    ), 
+	'administer droppie' => array(
+	'title' => t('Administer droppie'),
+ 	)
+  ); 
+}
