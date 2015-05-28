@@ -1,7 +1,7 @@
 <?
 require_once realpath(dirname(__FILE__) . "/cloudService.php");
-require_once realpath(dirname(__FILE__) . "/DropboxWrapper.php");
-use \DropboxWrapper as dbw;
+#require_once realpath(dirname(__FILE__) . "/DropboxWrapper.php");
+#use \DropboxWrapper as dbw;
 require_once realpath(dirname(__FILE__) . "/GoogleDriveWrapper.php");
 use \GoogleDriveWrapper as gdw;
 
@@ -16,15 +16,14 @@ function getWrapperInterface() {
 class WrapperInterface {
 	private $_cloudService = NULL;
 	
-	private function createCloudService() {
-		$service = variable_get(DroppieDefines::DROPPIE_CLOUD_SERVICE, -1);
-
+	private function createCloudService($service) {
 		switch($service) {
-			case -1:
+			default:
 				drupal_set_message(t('Error: unkown service.'), 'error');
 				$cloudService = NULL;
+				break;
 			case CloudService::GoogleDrive:
-				$cloudService = $this->googledrive_form($form);
+				$cloudService = new GoogleDriveWrapper();
 				break;
 		}
 		return $cloudService;
@@ -32,7 +31,8 @@ class WrapperInterface {
 
 	public function getCloudService() {
 		if($this->_cloudService == NULL) {
-			$this->_cloudService = $this->createCloudService();	
+			$service = DroppieDefines::getValue(DroppieDefines::DROPPIE_CLOUD_SERVICE, -1);
+			$this->_cloudService = $this->createCloudService($service);	
 		}
 		return $this->_cloudService;
 	}
@@ -59,20 +59,6 @@ class WrapperInterface {
 			'#markup' => l(t('Reauthenticate'),$cloudService->getAuthorizeUrl()),	
 		);
 		return $cloudService;
-	}
-
-	public function handle_form(&$form) {
-		$service = variable_get(DroppieDefines::DROPPIE_CLOUD_SERVICE, -1);
-			
-		switch($service) {
-			case -1:
-				drupal_set_message(t('Error: unkown service.'), 'error');
-				break;
-			case CloudService::GoogleDrive:
-				$this->_cloudService = $this->googledrive_form($form);
-				break;
-		}
-		return $this->_cloudService;
 	}
 }
 ?>

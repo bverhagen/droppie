@@ -4,7 +4,14 @@ abstract class Format {
 	public static function formatDirs($entries, $dir) {
 		$formattedDirs = '<table>';
 		$formattedDirs .= '<thead>';
-		$formattedDirs .= '<tr><th></th><th>' . t('Name') . '</th><th>' . t('Size') . '</th>';
+		$formattedDirs .= '<tr>';
+		if(DroppieDefines::getValue(DroppieDefines::DROPPIE_SHOW_ICON, false)) {
+			$formattedDirs .= '<th class="droppie_icon"></th>';
+		}
+		$formattedDirs .= '<th class="droppie_name">' . t('Name') . '</th>';
+		if(DroppieDefines::getValue(DroppieDefines::DROPPIE_SHOW_FILE_SIZE, false)) {
+			$formattedDirs .= '<th class="droppie_size">' . t('Size') . '</th>';
+		}
 		$formattedDirs .= '</thead>';
 		$formattedDirs .= '<tbody>';
 		self::formatDirsHelper($formattedDirs, $entries, $dir);	
@@ -18,11 +25,20 @@ abstract class Format {
 		$dir = trim($dir, '/');
 
 		if(! self::isRoot($dir)) {
-			$format .= '<tr><td>&ltri;</td><td><a href="' . $currentUrl . '?&dir=' . self::getParentDir($dir) . '"> ..</a></td><td></td></tr>'; 
+			$format .= self::getRootHtml($dir);
 		}
 
+		$odd = false;
 		foreach($entries->_children as $entry) {
-			$newEntry = '<tr>';
+			$newEntry = '<tr class="';
+			if($odd) {
+				$odd = false;
+				$newEntry .= "odd";
+			} else {
+				$odd = true;
+				$newEntry .= "even";
+			}
+			$newEntry .= '">';
 			$newEntry .= self::getIconHtml($entry);
 			$newEntry .= self::getNameHtml($entry, $dir);
 			$newEntry .= self::getSizeHtml($entry, $dir);
@@ -36,24 +52,46 @@ abstract class Format {
 		$format .= $addLater;
 	}
 
+	private static function getRootHtml($dir) {
+		$rootHtml = '<tr class="odd">';
+		if(DroppieDefines::getValue(DroppieDefines::DROPPIE_SHOW_ICON, false)) {
+			$rootHtml .= '<td class="droppie_icon droppie_icon_parent">&ltri;</td>';
+		}
+		$currentUrl = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+		$rootHtml .= '<td class="droppie_name"><a href="' . $currentUrl . '?&dir=' . self::getParentDir($dir) . '"> ..</a></td>';
+		if(DroppieDefines::getValue(DroppieDefines::DROPPIE_SHOW_FILE_SIZE, false)) {
+			$rootHtml .= '<td class="droppie_size"></td>';
+		}
+		$rootHtml .= '</tr>'; 
+		return $rootHtml;
+	}
+
 	private static function getIconHtml($entry) {
-		return '<td><img src="' . $entry->getIconUrl() . '"/></td>';
+		$iconHtml = '';
+		if(DroppieDefines::getValue(DroppieDefines::DROPPIE_SHOW_ICON, false)) {
+			$iconHtml .= '<td class="droppie_icon"><img src="' . $entry->getIconUrl() . '"/></td>';
+		}
+		return $iconHtml;
 	}
 
 	private static function getNameHtml($entry, $dir) {
-			$currentUrl = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-			$name = '<td><a href="' . $currentUrl;
-			if($entry->isDirectory()) {
-				$name .= '?&dir=';
-			} else {
-				$name .= '?&file=';
-			}
-			$name .= $dir . '/' . $entry->_name . '">' . $entry->_name . '</a></td>';
-			return $name;
+		$currentUrl = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+		$name = '<td class="droppie_name"><a href="' . $currentUrl;
+		if($entry->isDirectory()) {
+			$name .= '?&dir=';
+		} else {
+			$name .= '?&file=';
+		}
+		$name .= $dir . '/' . $entry->_name . '">' . $entry->_name . '</a></td>';
+		return $name;
 	}
 
 	private static function getSizeHtml($entry) {
-			return '<td>' . self::convertSize($entry->getSize()) . '</td>';
+		$sizeHtml = '';
+		if(DroppieDefines::getValue(DroppieDefines::DROPPIE_SHOW_FILE_SIZE, false)) {
+			$sizeHtml .= '<td class="droppie_size">' . self::convertSize($entry->getSize()) . '</td>';
+		}
+		return $sizeHtml;
 	}
 
 	private static function isRoot($dir) {

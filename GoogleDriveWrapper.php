@@ -1,5 +1,6 @@
 <?
 require_once realpath(dirname(__FILE__) . "/cloudService.php");
+require_once realpath(dirname(__FILE__) . "/drupalFormWrappers.php");
 require_once realpath(dirname(__FILE__) . '/google-api-php-client/src/Google/autoload.php');
 
 class GoogleDriveDirectory extends CloudServiceDirectory  {
@@ -26,17 +27,38 @@ class GoogleDriveWrapper extends CloudServiceWrapper {
 	const _OAUTH_TOKEN = 'droppie_gdw_oauth_token';
 	const _OAUTH_ACCESS_TOKEN = 'droppie_gdw_access_token';
 	const _OAUTH_REFRESH_TOKEN = 'droppie_gdw_refresh_token';
+	const _REAUTH = 'droppie_gdw_reauth';
+	const _CLIENT_ID = 'droppie_gdw_client_id';
+	const _CLIENT_SECRET = 'droppie_gdw_client_secret';
+	const _FIELD_KEY = 'droppie_gdw_field_key';
 
 	public function __construct() {
 		$this->_client = new Google_Client();
 		// Get your credentials from the console
-		$this->_client->setClientId('675897377805-ja4bnm8j0bgbi402b0ora649uvp3jug9.apps.googleusercontent.com');
-		$this->_client->setClientSecret('#########################');
+		$clientId = DroppieDefines::getValue(self::_CLIENT_ID, '681742154256-c7t40k9vfu4apb0bk4ijpcp57l81pbme.apps.googleusercontent.com');
+		$clientSecret = DroppieDefines::getValue(self::_CLIENT_SECRET, '02_9p1yiidPZ3BO_pZs39hxV');
+		$this->_client->setClientId($clientId);
+		$this->_client->setClientSecret($clientSecret);
 		$this->_client->setRedirectUri($GLOBALS['base_url'] . '/admin/config/content/droppie/googledrive');
 		$this->_client->setScopes(array('https://www.googleapis.com/auth/drive'));
 		$this->_client->setAccessType('offline');
 		$this->_client->setApprovalPrompt('force');
 		$this->_service = new Google_Service_Drive($this->_client);
+	}
+
+	public function attachToAdminForm(&$form) {
+		$collapsed = 'FALSE';
+		if(variable_get(self::_CLIENT_ID, NULL) == NULL || variable_get(self::_CLIENT_SECRET, NULL) == NULL) {
+			drupal_set_message(t('Using the default cliend id and secret is unsafe. Please create your own one in order to safely use this plugin'), 'warning');
+			$collapsed = 'TRUE';
+		}
+
+		attachDrupalFieldSet($form, self::_FIELD_KEY, t('Google Drive'), $collapsed);
+		$form[self::_FIELD_KEY][self::_REAUTH] = array(
+			'#markup' => l(t('Reauthenticate'),$this->getAuthorizeUrl()),	
+		);
+		attachDrupalTextField($form[self::_FIELD_KEY], self::_CLIENT_ID, t('Client id:'));
+		attachDrupalTextField($form[self::_FIELD_KEY], self::_CLIENT_SECRET, t('Client id:'));
 	}
  	
 	public static function getCloudServiceType() {
@@ -202,7 +224,7 @@ class GoogleDriveWrapper extends CloudServiceWrapper {
 		$idMapping = self::getIdMapping($files);
 		$idTree = self::getIdTree($idMapping);
 		self::convertToDriveFiles($idTree, $fileMapping);
-		$memoryTree = self::selectRoot($idTree['/'], variable_get(DroppieDefines::DROPPIE_ROOT_DIR, NULL));
+		$memoryTree = self::selectRoot($idTree['/'], DroppieDefines::getValue(DroppieDefines::DROPPIE_ROOT_DIR, NULL));
 		return $memoryTree;
 	}
 

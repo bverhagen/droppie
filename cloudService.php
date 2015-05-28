@@ -1,13 +1,47 @@
 <?
 abstract class CloudService
 {
-    const GoogleDrive = 0;
+    const GoogleDrive = 'Google Drive';
 }
 
 abstract class DroppieDefines {
 	const DROPPIE_ROOT_DIR = 'droppie_root_dir';
 	const DROPPIE_CLOUD_SERVICE = 'droppie_cloud_service';
+	const DROPPIE_SHOW_ICON = 'droppie_show_icon';
+	const DROPPIE_SHOW_FILE_SIZE = 'droppie_show_file_size';
+	const DROPPIE_FORMAT_KEY = 'droppie_format';
 	public static $cloudServiceWrapper = NULL;
+
+	public static function &get(&$form, $key) {
+		switch($key) {
+			case self::DROPPIE_ROOT_DIR:
+			case self::DROPPIE_CLOUD_SERVICE:
+			case self::DROPPIE_FORMAT_KEY:
+			default:
+				return $form[$key];
+			case self::DROPPIE_SHOW_ICON:
+			case self::DROPPIE_SHOW_FILE_SIZE:
+				return $form[self::DROPPIE_FORMAT_KEY][$key];
+		}
+	}
+
+	public static function getValue($key, $default) {
+		switch($key) {
+			case self::DROPPIE_ROOT_DIR:
+			case self::DROPPIE_CLOUD_SERVICE:
+			case self::DROPPIE_FORMAT_KEY:
+			default:
+				return variable_get($key, $default);
+			case self::DROPPIE_SHOW_ICON:
+			case self::DROPPIE_SHOW_FILE_SIZE:
+				$currentValue = variable_get(self::DROPPIE_FORMAT_KEY, NULL);
+				if($currentValue) {
+					return $currentValue[$key];
+				} else {
+					return $default;
+				}
+		}
+	}
 }
 
 abstract class CloudServiceItem {
