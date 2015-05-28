@@ -34,7 +34,7 @@ function droppie_help($path, $arg) {
 function droppie_menu() {
 	$items = array(); 
 	      $items['droppie'] = array(
-		'title' => DroppieDefines::getValue(DroppieDefines::DROPPIE_ROOT_DIR, 'Droppie'),
+		'title' => CloudServiceWrapper::getValue(DroppieDefines::DROPPIE_ROOT_DIR, 'Droppie'),
 		'description' => 'Show the content of the given cloud service folder',
 		'page callback' => 'droppie_main',
 		'access arguments' => array('access droppie content'),
@@ -64,7 +64,7 @@ function droppie_menu() {
 
 function droppie_main() {
 	if(! isset($_GET['file'])) {
-		$mainDir = DroppieDefines::getValue(DroppieDefines::DROPPIE_ROOT_DIR, '');
+		$mainDir = CloudServiceWrapper::getValue(DroppieDefines::DROPPIE_ROOT_DIR, '');
 		if(isset($_GET['dir'])) {
 			$dir = ltrim(urldecode($_GET['dir']), '/');
 		} else {
@@ -106,14 +106,15 @@ function droppie_getFile($file) {
 }
 
 function droppie_common_attachToAdminForm(&$form, $cloudService) {
-	attachDrupalSelect($form, DroppieDefines::DROPPIE_CLOUD_SERVICE, t('Select the cloud service to use'), array(CloudService::GoogleDrive), CloudService::GoogleDrive);
+	attachDrupalSelect($form, $cloudService, DroppieDefines::DROPPIE_CLOUD_SERVICE, t('Select the cloud service to use'), array(CloudService::GoogleDrive), CloudService::GoogleDrive);
 	if( $cloudService->canBeAuthenticated() ) {
-		attachDrupalTextField($form, DroppieDefines::DROPPIE_ROOT_DIR, t('Root directory:'), '/');
-		attachDrupalFieldSet($form, DroppieDefines::DROPPIE_FORMAT_KEY, 'Format output');
-		attachDrupalCheckBox($form, DroppieDefines::DROPPIE_SHOW_ICON, t('Show icons'), true);
-		attachDrupalCheckBox($form, DroppieDefines::DROPPIE_SHOW_FILE_SIZE, t('Show file sizes'));
+		attachDrupalTextField($form, $cloudService, DroppieDefines::DROPPIE_ROOT_DIR, t('Root directory:'), '/');
+		attachDrupalFieldSet($form, $cloudService, DroppieDefines::DROPPIE_FORMAT_KEY, 'Format output');
+		attachDrupalCheckBox($form, $cloudService, DroppieDefines::DROPPIE_SHOW_ICON, t('Show icons'), true);
+		attachDrupalCheckBox($form, $cloudService, DroppieDefines::DROPPIE_SHOW_FILE_SIZE, t('Show file sizes'));
 	} else {
 		$authorizeUrl = $cloudService->getAuthorizeUrl();
+		$account = CloudServiceWrapper::getValue(DroppieDefines::DROPPIE_CLOUD_SERVICE, t('Please set your cloud service account for the droppie module'));
 		drupal_set_message(t('You need to grant access to this app to work with your ' . $account . ' account. Click') . '<a href="'.$authorizeUrl . '" target="_blank"> here</a>' . t(', login, grant this app access and copy the received token into the Oauth token field'), 'warning');
 	}
 }
@@ -146,7 +147,7 @@ function droppie_googledrive_setClientToken() {
 				drupal_set_message(t('Error: please set Google drive to active in the admin panel before generating a token'), 'error');
 			}
 		}
-		$redirect = 'http://' . $_SERVER['HTTP_HOST'] . '/arenbergorkest/admin/config/content/droppie';
+		$redirect = $GLOBALS['base_url'] . '/admin/config/content/droppie';
 		header('Location: ' . filter_var($redirect, FILTER_SANITIZE_URL));
 	} catch (Exception $e) {
 		displayError($e);

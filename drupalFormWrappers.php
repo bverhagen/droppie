@@ -1,35 +1,35 @@
 <?
 require_once realpath(dirname(__FILE__) . "/cloudService.php");
 
-function attachDrupalTextField(&$form, $key, $title, $defaultValue = NULL, $maxLength = 255) {
-	$newFormValue = &DroppieDefines::get($form, $key);
-	$newFormValue = getDrupalTextField($key, $title, $defaultValue, $maxLength);
+function attachDrupalTextField(&$form, $cloudService, $key, $title, $defaultValue = NULL, $maxLength = 255) {
+	$newFormValue = &$cloudService->get($form, $key);
+	$newFormValue = getDrupalTextField($cloudService, $key, $title, $defaultValue, $maxLength);
 }
 
-function getDrupalTextField($key, $title, $defaultValue = NULL, $maxLength = 255) {
+function getDrupalTextField($cloudService, $key, $title, $defaultValue = NULL, $maxLength = 255) {
 	return array (
 			'#type' => 'textfield',
 			'#maxlength' => $maxLength,
 			'#title' => $title,
-			'#default_value' => DroppieDefines::getValue($key, $defaultValue)
+			'#default_value' => $cloudService->getValue($key, $defaultValue)
 		);
 }
 
-function attachDrupalCheckBox(&$form, $key, $title, $defaultValue = false) {
-	$newFormValue = &DroppieDefines::get($form, $key);
-	$newFormValue = getDrupalCheckBox($key, $title, $defaultValue, $maxLength);
+function attachDrupalCheckBox(&$form, $cloudService, $key, $title, $defaultValue = false) {
+	$newFormValue = &$cloudService->get($form, $key);
+	$newFormValue = getDrupalCheckBox($cloudService, $key, $title, $defaultValue, $maxLength);
 }
 
-function getDrupalCheckBox($key, $title, $defaultValue = false) {
+function getDrupalCheckBox($cloudService, $key, $title, $defaultValue = false) {
 	return array (
 		'#type' => 'checkbox',
 		'#title' => $title,
-		'#default_value' => DroppieDefines::getValue($key, $defaultValue)
+		'#default_value' => $cloudService->getValue($key, $defaultValue)
 	);
 }
 
-function attachDrupalFieldSet(&$form, $key, $title, $collapsed = true) {
-	$newFormValue = &DroppieDefines::get($form, $key);
+function attachDrupalFieldSet(&$form, $cloudService, $key, $title, $collapsed = true) {
+	$newFormValue = &$cloudService->get($form, $key);
 	$newFormValue = getDrupalFieldSet($title, $collapsed);
 }
 
@@ -43,16 +43,16 @@ function getDrupalFieldSet($title, $collapsed = true) {
 	);
 }
 
-function attachDrupalSelect(&$form, $key, $title, $options = array(), $defaultValue = NULL) {
-	$newFormValue = &DroppieDefines::get($form, $key);
-	$newFormValue = getDrupalSelect($key, $title, $options, $defaultValue);
+function attachDrupalSelect(&$form, $cloudService, $key, $title, $options = array(), $defaultValue = NULL) {
+	$newFormValue = &$cloudService->get($form, $key);
+	$newFormValue = getDrupalSelect($cloudService, $key, $title, $options, $defaultValue);
 }
 
-function getDrupalSelect($key, $title, $options = array(), $defaultValue = NULL) {
+function getDrupalSelect($cloudService, $key, $title, $options = array(), $defaultValue = NULL) {
 	return array(
 		'#type' => 'select',
 		'#title' => $title,
-		'#default_value' => DroppieDefines::getValue($key, $defaultValue),
+		'#default_value' => $cloudService->getValue($key, $defaultValue),
 		'#options' => $options,
 	);
 }

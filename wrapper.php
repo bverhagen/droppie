@@ -20,7 +20,7 @@ class WrapperInterface {
 		switch($service) {
 			default:
 				drupal_set_message(t('Error: unkown service.'), 'error');
-				$cloudService = NULL;
+				$cloudService = new GoogleDriveWrapper();
 				break;
 			case CloudService::GoogleDrive:
 				$cloudService = new GoogleDriveWrapper();
@@ -31,7 +31,7 @@ class WrapperInterface {
 
 	public function getCloudService() {
 		if($this->_cloudService == NULL) {
-			$service = DroppieDefines::getValue(DroppieDefines::DROPPIE_CLOUD_SERVICE, -1);
+			$service = CloudServiceWrapper::getValue(DroppieDefines::DROPPIE_CLOUD_SERVICE, -1);
 			$this->_cloudService = $this->createCloudService($service);	
 		}
 		return $this->_cloudService;

@@ -5,11 +5,13 @@ abstract class Format {
 		$formattedDirs = '<table>';
 		$formattedDirs .= '<thead>';
 		$formattedDirs .= '<tr>';
-		if(DroppieDefines::getValue(DroppieDefines::DROPPIE_SHOW_ICON, false)) {
+		
+		$cloudService = getWrapperInterface()->getCloudService();
+		if($cloudService->getValue(DroppieDefines::DROPPIE_SHOW_ICON, false)) {
 			$formattedDirs .= '<th class="droppie_icon"></th>';
 		}
 		$formattedDirs .= '<th class="droppie_name">' . t('Name') . '</th>';
-		if(DroppieDefines::getValue(DroppieDefines::DROPPIE_SHOW_FILE_SIZE, false)) {
+		if($cloudService->getValue(DroppieDefines::DROPPIE_SHOW_FILE_SIZE, false)) {
 			$formattedDirs .= '<th class="droppie_size">' . t('Size') . '</th>';
 		}
 		$formattedDirs .= '</thead>';
@@ -54,12 +56,13 @@ abstract class Format {
 
 	private static function getRootHtml($dir) {
 		$rootHtml = '<tr class="odd">';
-		if(DroppieDefines::getValue(DroppieDefines::DROPPIE_SHOW_ICON, false)) {
+		$cloudService = getWrapperInterface()->getCloudService();
+		if($cloudService->getValue(DroppieDefines::DROPPIE_SHOW_ICON, false)) {
 			$rootHtml .= '<td class="droppie_icon droppie_icon_parent">&ltri;</td>';
 		}
 		$currentUrl = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 		$rootHtml .= '<td class="droppie_name"><a href="' . $currentUrl . '?&dir=' . self::getParentDir($dir) . '"> ..</a></td>';
-		if(DroppieDefines::getValue(DroppieDefines::DROPPIE_SHOW_FILE_SIZE, false)) {
+		if($cloudService->getValue(DroppieDefines::DROPPIE_SHOW_FILE_SIZE, false)) {
 			$rootHtml .= '<td class="droppie_size"></td>';
 		}
 		$rootHtml .= '</tr>'; 
@@ -68,7 +71,8 @@ abstract class Format {
 
 	private static function getIconHtml($entry) {
 		$iconHtml = '';
-		if(DroppieDefines::getValue(DroppieDefines::DROPPIE_SHOW_ICON, false)) {
+		$cloudService = getWrapperInterface()->getCloudService();
+		if($cloudService->getValue(DroppieDefines::DROPPIE_SHOW_ICON, false)) {
 			$iconHtml .= '<td class="droppie_icon"><img src="' . $entry->getIconUrl() . '"/></td>';
 		}
 		return $iconHtml;
@@ -88,7 +92,8 @@ abstract class Format {
 
 	private static function getSizeHtml($entry) {
 		$sizeHtml = '';
-		if(DroppieDefines::getValue(DroppieDefines::DROPPIE_SHOW_FILE_SIZE, false)) {
+		$cloudService = getWrapperInterface()->getCloudService();
+		if($cloudService->getValue(DroppieDefines::DROPPIE_SHOW_FILE_SIZE, false)) {
 			$sizeHtml .= '<td class="droppie_size">' . self::convertSize($entry->getSize()) . '</td>';
 		}
 		return $sizeHtml;
